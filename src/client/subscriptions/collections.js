@@ -9,9 +9,7 @@ export function createCollectionSubscriptions(client) {
     if (!subscription) return
 
     if (version !== subscription.version + 1) {
-      clientLogger.warn(
-        `Desync detected for collection ${collectionId}. Expected version ${subscription.version + 1}, got ${version}. Resubscribing.`
-      )
+      clientLogger.warn("desync detected for collection, resubscribing", { collectionId, expected: subscription.version + 1, got: version })
       await unsubscribe(collectionId)
       await subscribe(collectionId, { onDiff: subscription.onDiff })
       return
@@ -30,7 +28,7 @@ export function createCollectionSubscriptions(client) {
           version,
         })
       } catch (error) {
-        clientLogger.error(`Error in collection diff callback for ${collectionId}:`, error)
+        clientLogger.error("error in collection diff callback", { collectionId, err: error })
       }
     }
   }
@@ -53,13 +51,13 @@ export function createCollectionSubscriptions(client) {
           try {
             await options.onDiff({ added: result.records, removed: [], changed: [], version: result.version })
           } catch (error) {
-            clientLogger.error(`Error in initial collection diff callback for ${collectionId}:`, error)
+            clientLogger.error("error in initial collection diff callback", { collectionId, err: error })
           }
         }
       }
       return { success: result.success, ids: result.ids || [], records: result.records || [], version: result.version || 0 }
     } catch (error) {
-      clientLogger.error(`Failed to subscribe to collection ${collectionId}:`, error)
+      clientLogger.error("failed to subscribe to collection", { collectionId, err: error })
       return { success: false, ids: [], records: [], version: 0 }
     }
   }
@@ -74,7 +72,7 @@ export function createCollectionSubscriptions(client) {
       if (success) subscriptions.delete(collectionId)
       return success
     } catch (error) {
-      clientLogger.error(`Failed to unsubscribe from collection ${collectionId}:`, error)
+      clientLogger.error("failed to unsubscribe from collection", { collectionId, err: error })
       return false
     }
   }
@@ -85,7 +83,7 @@ export function createCollectionSubscriptions(client) {
         await subscribe(collectionId, { onDiff: subscription.onDiff })
         return true
       } catch (error) {
-        clientLogger.error(`Failed to resubscribe to collection ${collectionId}:`, error)
+        clientLogger.error("failed to resubscribe to collection", { collectionId, err: error })
         return false
       }
     })

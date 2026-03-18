@@ -65,10 +65,10 @@ export class RecordManager {
       Promise.all(
         this.recordUpdateCallbacks.map(async (callback) => {
           try { await callback({ recordId, value: finalValue }) }
-          catch (error) { serverLogger.error(`Error in record update callback for ${recordId}:`, error) }
+          catch (error) { serverLogger.error("error in record update callback", { recordId, err: error }) }
         })
       ).catch((error) => {
-        serverLogger.error(`Error in record update callbacks for ${recordId}:`, error)
+        serverLogger.error("error in record update callbacks", { recordId, err: error })
       })
     }
 
@@ -88,10 +88,10 @@ export class RecordManager {
       Promise.all(
         this.recordRemovedCallbacks.map(async (callback) => {
           try { await callback({ recordId, value: record }) }
-          catch (error) { serverLogger.error(`Error in record removed callback for ${recordId}:`, error) }
+          catch (error) { serverLogger.error("error in record removed callback", { recordId, err: error }) }
         })
       ).catch((error) => {
-        serverLogger.error(`Error in record removed callbacks for ${recordId}:`, error)
+        serverLogger.error("error in record removed callbacks", { recordId, err: error })
       })
     }
 

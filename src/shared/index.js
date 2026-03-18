@@ -1,5 +1,5 @@
 export { CodeError } from "./errors.js"
-export { LogLevel, Logger, clientLogger, serverLogger, logger } from "./logger.js"
+export { LogLevel, configureLogLevel, clientLogger, serverLogger, logger } from "./logger.js"
 export { deepMerge, isObject } from "./merge.js"
 export { parseCommand, stringifyCommand } from "./message.js"
 export { Status } from "./status.js"

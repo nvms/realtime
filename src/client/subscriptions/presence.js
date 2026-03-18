@@ -23,7 +23,7 @@ export function createPresenceSubscriptions(client) {
       }
       return { success: result.success, present: result.present || [], states: result.states || {} }
     } catch (error) {
-      clientLogger.error(`Failed to subscribe to presence for room ${roomName}:`, error)
+      clientLogger.error("failed to subscribe to presence for room", { roomName, err: error })
       return { success: false, present: [] }
     }
   }
@@ -38,7 +38,7 @@ export function createPresenceSubscriptions(client) {
       if (success) subscriptions.delete(roomName)
       return success
     } catch (error) {
-      clientLogger.error(`Failed to unsubscribe from presence for room ${roomName}:`, error)
+      clientLogger.error("failed to unsubscribe from presence for room", { roomName, err: error })
       return false
     }
   }
@@ -57,7 +57,7 @@ export function createPresenceSubscriptions(client) {
         silent: options.silent,
       })
     } catch (error) {
-      clientLogger.error(`Failed to publish presence state for room ${roomName}:`, error)
+      clientLogger.error("failed to publish presence state for room", { roomName, err: error })
       return false
     }
   }
@@ -70,7 +70,7 @@ export function createPresenceSubscriptions(client) {
     try {
       return await client.command("rt/clear-presence-state", { roomName })
     } catch (error) {
-      clientLogger.error(`Failed to clear presence state for room ${roomName}:`, error)
+      clientLogger.error("failed to clear presence state for room", { roomName, err: error })
       return false
     }
   }
@@ -80,7 +80,7 @@ export function createPresenceSubscriptions(client) {
       const handler = subscriptions.get(roomName)
       if (!handler) return false
       const result = await client.command("rt/get-presence-state", { roomName }, 5000).catch((err) => {
-        clientLogger.error(`Failed to get presence state for room ${roomName}:`, err)
+        clientLogger.error("failed to get presence state for room", { roomName, err })
         return { success: false }
       })
       if (!result.success) return false
@@ -89,7 +89,7 @@ export function createPresenceSubscriptions(client) {
       }
       return true
     } catch (error) {
-      clientLogger.error(`Failed to force presence update for room ${roomName}:`, error)
+      clientLogger.error("failed to force presence update for room", { roomName, err: error })
       return false
     }
   }

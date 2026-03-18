@@ -49,7 +49,7 @@ export function createPostgresAdapter(options = {}) {
         await createTables()
         initialized = true
       } catch (err) {
-        serverLogger.error("Error initializing PostgreSQL database:", err)
+        serverLogger.error("error initializing postgresql database", { err })
         throw err
       }
     },

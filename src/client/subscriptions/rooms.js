@@ -44,7 +44,7 @@ export function createRoomSubscriptions(client, presence) {
       const result = await client.command("rt/get-room-metadata", { roomName })
       return result.metadata
     } catch (error) {
-      clientLogger.error(`Failed to get metadata for room ${roomName}:`, error)
+      clientLogger.error("failed to get metadata for room", { roomName, err: error })
       return null
     }
   }
@@ -55,7 +55,7 @@ export function createRoomSubscriptions(client, presence) {
         await join(roomName, presenceCallback)
         return { roomName, success: true }
       } catch (error) {
-        clientLogger.error(`Failed to rejoin room ${roomName}:`, error)
+        clientLogger.error("failed to rejoin room", { roomName, err: error })
         return { roomName, success: false }
       }
     })

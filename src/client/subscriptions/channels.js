@@ -10,7 +10,7 @@ export function createChannelSubscriptions(client) {
       try {
         await subscription.callback(message)
       } catch (error) {
-        clientLogger.error(`Error in channel callback for ${channel}:`, error)
+        clientLogger.error("error in channel callback", { channel, err: error })
       }
     }
   }
@@ -57,7 +57,7 @@ export function createChannelSubscriptions(client) {
       })
       return { success: result.success, history: result.history || [] }
     } catch (error) {
-      clientLogger.error(`Failed to get history for channel ${channel}:`, error)
+      clientLogger.error("failed to get history for channel", { channel, err: error })
       return { success: false, history: [] }
     }
   }
@@ -68,7 +68,7 @@ export function createChannelSubscriptions(client) {
         await subscribe(channel, callback, { historyLimit })
         return true
       } catch (error) {
-        clientLogger.error(`Failed to resubscribe to channel ${channel}:`, error)
+        clientLogger.error("failed to resubscribe to channel", { channel, err: error })
         return false
       }
     })

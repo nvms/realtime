@@ -16,7 +16,7 @@ export function createRecordSubscriptions(client) {
             version,
           })
         } catch (error) {
-          clientLogger.error(`Error in collection record update callback for ${collectionId}:`, error)
+          clientLogger.error("error in collection record update callback", { collectionId, err: error })
         }
       }
     }
@@ -26,9 +26,7 @@ export function createRecordSubscriptions(client) {
 
     if (patch) {
       if (version !== subscription.localVersion + 1) {
-        clientLogger.warn(
-          `Desync detected for record ${recordId}. Expected version ${subscription.localVersion + 1}, got ${version}. Resubscribing to request full record.`
-        )
+        clientLogger.warn("desync detected for record, resubscribing", { recordId, expected: subscription.localVersion + 1, got: version })
         await unsubscribe(recordId)
         await subscribe(recordId, subscription.callback, { mode: subscription.mode })
         return
@@ -48,7 +46,7 @@ export function createRecordSubscriptions(client) {
       try {
         await subscription.callback({ recordId, deleted: true, version })
       } catch (error) {
-        clientLogger.error(`Error in record deletion callback for ${recordId}:`, error)
+        clientLogger.error("error in record deletion callback", { recordId, err: error })
       }
     }
     subscriptions.delete(recordId)
@@ -70,7 +68,7 @@ export function createRecordSubscriptions(client) {
       }
       return { success: result.success, record: result.record ?? null, version: result.version ?? 0 }
     } catch (error) {
-      clientLogger.error(`Failed to subscribe to record ${recordId}:`, error)
+      clientLogger.error("failed to subscribe to record", { recordId, err: error })
       return { success: false, record: null, version: 0 }
     }
   }
@@ -85,7 +83,7 @@ export function createRecordSubscriptions(client) {
       if (success) subscriptions.delete(recordId)
       return success
     } catch (error) {
-      clientLogger.error(`Failed to unsubscribe from record ${recordId}:`, error)
+      clientLogger.error("failed to unsubscribe from record", { recordId, err: error })
       return false
     }
   }
@@ -101,7 +99,7 @@ export function createRecordSubscriptions(client) {
       const result = await client.command("rt/publish-record-update", { recordId, newValue, options })
       return result.success === true
     } catch (error) {
-      clientLogger.error(`Failed to publish update for record ${recordId}:`, error)
+      clientLogger.error("failed to publish update for record", { recordId, err: error })
       return false
     }
   }
@@ -112,7 +110,7 @@ export function createRecordSubscriptions(client) {
         await subscribe(recordId, callback, { mode })
         return true
       } catch (error) {
-        clientLogger.error(`Failed to resubscribe to record ${recordId}:`, error)
+        clientLogger.error("failed to resubscribe to record", { recordId, err: error })
         return false
       }
     })

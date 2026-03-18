@@ -61,12 +61,12 @@ export class InstanceManager {
         if (instanceId === this.instanceId) continue
         const heartbeat = await this.redis.get(`rt:instance:${instanceId}:heartbeat`)
         if (!heartbeat) {
-          serverLogger.info(`Found dead instance: ${instanceId}`)
+          serverLogger.info("found dead instance", { instanceId })
           await this._cleanupDeadInstance(instanceId)
         }
       }
     } catch (error) {
-      serverLogger.error("Error during cleanup:", error)
+      serverLogger.error("error during cleanup", { err: error })
     } finally {
       await this._releaseCleanupLock()
     }
@@ -85,9 +85,9 @@ export class InstanceManager {
       }
       await this.redis.srem("rt:instances", instanceId)
       await this.redis.del(connectionsKey)
-      serverLogger.info(`Cleaned up dead instance: ${instanceId}`)
+      serverLogger.info("cleaned up dead instance", { instanceId })
     } catch (error) {
-      serverLogger.error(`Error cleaning up instance ${instanceId}:`, error)
+      serverLogger.error("error cleaning up instance", { instanceId, err: error })
     }
   }
 
@@ -117,9 +117,9 @@ export class InstanceManager {
       pipeline.hdel("rt:connection-meta", connectionId)
       await this._deleteMatchingKeys(`rt:collection:*:${connectionId}`)
       await pipeline.exec()
-      serverLogger.debug(`Cleaned up stale connection: ${connectionId}`)
+      serverLogger.debug("cleaned up stale connection", { connectionId })
     } catch (error) {
-      serverLogger.error(`Error cleaning up connection ${connectionId}:`, error)
+      serverLogger.error("error cleaning up connection", { connectionId, err: error })
     }
   }
 }

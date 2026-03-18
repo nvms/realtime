@@ -47,7 +47,7 @@ export class PresenceManager {
         await this._publishPresenceStateUpdate(match[1], match[2], null)
       }
     } catch (err) {
-      serverLogger.error("[PresenceManager] Failed to handle expired key:", err)
+      serverLogger.error("failed to handle expired key", { key, err })
     }
   }
 
@@ -167,7 +167,7 @@ export class PresenceManager {
     const value = await this.redis.get(key)
     if (!value) return null
     try { return JSON.parse(value) }
-    catch (e) { serverLogger.error(`[PresenceManager] Failed to parse presence state: ${e}`); return null }
+    catch (e) { serverLogger.error("failed to parse presence state", { err: e }); return null }
   }
 
   async getAllPresenceStates(roomName) {
@@ -186,7 +186,7 @@ export class PresenceManager {
       const [err, value] = responses[i] || []
       if (err || !value) continue
       try { result.set(connectionId, JSON.parse(value)) }
-      catch (e) { serverLogger.error(`[PresenceManager] Failed to parse presence state: ${e}`) }
+      catch (e) { serverLogger.error("failed to parse presence state", { err: e }) }
     }
     return result
   }

@@ -212,7 +212,7 @@ export class PubSubManager {
                 connection.send({ command: "rt/record-update", payload: { recordId, version, full: record } })
               }
             } catch (recordError) {
-              serverLogger.info(`Record ${recordId} not found during collection update (likely deleted).`)
+              serverLogger.info("record not found during collection update, likely deleted", { recordId })
             }
           }
         }

@@ -39,7 +39,7 @@ export class Connection extends EventEmitter {
         this.missedPongs++
         const maxMissedPongs = this.connectionOptions.maxMissedPongs ?? 1
         if (this.missedPongs > maxMissedPongs) {
-          serverLogger.info(`Closing connection (${this.id}) due to missed pongs`)
+          serverLogger.info("closing connection due to missed pongs", { connectionId: this.id })
           this.close()
           this.server.cleanupConnection(this)
           return
@@ -59,7 +59,7 @@ export class Connection extends EventEmitter {
 
   _applyListeners() {
     this.socket.on("close", () => {
-      serverLogger.info("Client's socket closed:", this.id)
+      serverLogger.info("client socket closed", { connectionId: this.id })
       this.status = Status.OFFLINE
       this.emit("close")
     })

@@ -1,6 +1,6 @@
 import { EventEmitter } from "eventemitter3"
 import { Connection } from "./connection.js"
-import { clientLogger, CodeError, LogLevel, Status } from "../shared/index.js"
+import { clientLogger, configureLogLevel, CodeError, LogLevel, Status } from "../shared/index.js"
 import { createRecordSubscriptions } from "./subscriptions/records.js"
 import { createChannelSubscriptions } from "./subscriptions/channels.js"
 import { createPresenceSubscriptions } from "./subscriptions/presence.js"
@@ -43,7 +43,7 @@ export class RealtimeClient extends EventEmitter {
       logLevel: opts.logLevel ?? LogLevel.ERROR,
     }
 
-    clientLogger.configure({ level: this.options.logLevel, styling: true })
+    configureLogLevel(this.options.logLevel)
 
     this.recordSubscriptions = new Map()
     this.collectionSubscriptions = new Map()
@@ -175,7 +175,7 @@ export class RealtimeClient extends EventEmitter {
       const result = await this.command("rt/get-my-connection-metadata")
       return result.metadata
     } catch (error) {
-      clientLogger.error(`Failed to get metadata for connection:`, error)
+      clientLogger.error("failed to get metadata for connection", { err: error })
       return null
     }
   }
@@ -190,7 +190,7 @@ export class RealtimeClient extends EventEmitter {
       const result = await this.command("rt/set-my-connection-metadata", { metadata, options })
       return result.success
     } catch (error) {
-      clientLogger.error(`Failed to set metadata for connection:`, error)
+      clientLogger.error("failed to set metadata for connection", { err: error })
       return false
     }
   }
@@ -239,8 +239,8 @@ export class RealtimeClient extends EventEmitter {
             if (eventName === "visibilitychange" && doc.visibilityState === "visible") {
               if (this._status === Status.OFFLINE) return
               this.command("rt/noop", {}, 5000)
-                .then(() => { clientLogger.info("Tab visible, connection ok"); this.emit("republish") })
-                .catch(() => { clientLogger.info("Tab visible, forcing reconnect"); this._forceReconnect() })
+                .then(() => { clientLogger.info("tab visible, connection ok"); this.emit("republish") })
+                .catch(() => { clientLogger.info("tab visible, forcing reconnect"); this._forceReconnect() })
             }
           })
         })
@@ -254,7 +254,7 @@ export class RealtimeClient extends EventEmitter {
     const timeSinceActivity = now - this._lastActivityTime
     if (timeSinceActivity > this.options.pingTimeout && this._status === Status.ONLINE) {
       this.command("rt/noop", {}, 5000).catch(() => {
-        clientLogger.info(`No activity for ${timeSinceActivity}ms, forcing reconnect`)
+        clientLogger.info("no activity, forcing reconnect", { timeSinceActivity })
         this._forceReconnect()
       })
     }
@@ -325,7 +325,7 @@ export class RealtimeClient extends EventEmitter {
     this.missedPings++
     if (this.missedPings > this.options.maxMissedPings) {
       if (this.options.shouldReconnect) {
-        clientLogger.warn(`Missed ${this.missedPings} pings, reconnecting...`)
+        clientLogger.warn("missed pings, reconnecting", { missedPings: this.missedPings })
         this.reconnect()
       }
     } else {
@@ -418,7 +418,7 @@ export class RealtimeClient extends EventEmitter {
   }
 
   async _resubscribeAll() {
-    clientLogger.info("Resubscribing to all subscriptions after reconnect")
+    clientLogger.info("resubscribing to all subscriptions after reconnect")
     try {
       const successfulRooms = await this._rooms.resubscribe()
       await Promise.allSettled([
@@ -430,12 +430,12 @@ export class RealtimeClient extends EventEmitter {
       if (successfulRooms.length > 0) {
         for (const roomName of successfulRooms) {
           try { await this._presence.forceUpdate(roomName) }
-          catch (err) { clientLogger.error(`Error refreshing presence for room ${roomName}:`, err) }
+          catch (err) { clientLogger.error("error refreshing presence for room", { roomName, err }) }
           await new Promise((resolve) => setTimeout(resolve, 50))
         }
       }
     } catch (error) {
-      clientLogger.error("Error during resubscription:", error)
+      clientLogger.error("error during resubscription", { err: error })
     }
   }
 }

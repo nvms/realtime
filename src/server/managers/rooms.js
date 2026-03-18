@@ -121,7 +121,7 @@ export class RoomManager {
       const data = results?.[index]?.[1]
       if (data) {
         try { result.push({ id: roomName, metadata: JSON.parse(data) }) }
-        catch (e) { serverLogger.error(`Failed to parse metadata for room ${roomName}:`, e) }
+        catch (e) { serverLogger.error("failed to parse metadata for room", { roomName, err: e }) }
       }
     })
     return result

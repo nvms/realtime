@@ -34,7 +34,7 @@ export class PersistenceManager extends EventEmitter {
 
   async _processPendingRecordUpdates() {
     if (this.pendingRecordUpdates.length === 0) return
-    serverLogger.info(`Processing ${this.pendingRecordUpdates.length} pending record updates`)
+    serverLogger.info("processing pending record updates", { count: this.pendingRecordUpdates.length })
     const updates = [...this.pendingRecordUpdates]
     this.pendingRecordUpdates = []
     for (const { recordId, value, version } of updates) {
@@ -54,25 +54,25 @@ export class PersistenceManager extends EventEmitter {
       await this._processPendingRecordUpdates()
       this.emit("initialized")
     } catch (err) {
-      serverLogger.error("Failed to initialize persistence manager:", err)
+      serverLogger.error("failed to initialize persistence manager", { err })
       throw err
     }
   }
 
   async restorePersistedRecords() {
     if (!this.recordManager) {
-      serverLogger.warn("Cannot restore persisted records: record manager not available")
+      serverLogger.warn("cannot restore persisted records: record manager not available")
       return
     }
     const redis = this.recordManager.getRedis()
     if (!redis) {
-      serverLogger.warn("Cannot restore records: Redis not available")
+      serverLogger.warn("cannot restore records: redis not available")
       return
     }
     try {
-      serverLogger.info("Restoring persisted records...")
+      serverLogger.info("restoring persisted records")
       if (this.recordPatterns.length === 0) {
-        serverLogger.info("No record patterns to restore")
+        serverLogger.info("no record patterns to restore")
         return
       }
       for (const config of this.recordPatterns) {
@@ -93,7 +93,7 @@ export class PersistenceManager extends EventEmitter {
             }))
           }
           if (records.length > 0) {
-            serverLogger.info(`Restoring ${records.length} records for pattern ${patternLabel}`)
+            serverLogger.info("restoring records for pattern", { count: records.length, pattern: patternLabel })
             for (const record of records) {
               try {
                 const { recordId, value, version } = record
@@ -104,17 +104,17 @@ export class PersistenceManager extends EventEmitter {
                 pipeline.set(versionKey, version.toString())
                 await pipeline.exec()
               } catch (parseErr) {
-                serverLogger.error(`Failed to restore record ${record.recordId}: ${parseErr}`)
+                serverLogger.error("failed to restore record", { recordId: record.recordId, err: parseErr })
               }
             }
           }
         } catch (patternErr) {
-          serverLogger.error(`Error restoring records for pattern ${patternLabel}: ${patternErr}`)
+          serverLogger.error("error restoring records for pattern", { pattern: patternLabel, err: patternErr })
         }
       }
-      serverLogger.info("Finished restoring persisted records")
+      serverLogger.info("finished restoring persisted records")
     } catch (err) {
-      serverLogger.error("Failed to restore persisted records:", err)
+      serverLogger.error("failed to restore persisted records", { err })
     }
   }
 
@@ -133,7 +133,7 @@ export class PersistenceManager extends EventEmitter {
     }
     if (fullOptions.adapter !== this.defaultAdapter && !this.isShuttingDown) {
       fullOptions.adapter.initialize().catch((err) => {
-        serverLogger.error(`Failed to initialize adapter for pattern ${pattern}:`, err)
+        serverLogger.error("failed to initialize adapter for pattern", { pattern, err })
       })
     }
     this.channelPatterns.push({ pattern, options: fullOptions })
@@ -148,7 +148,7 @@ export class PersistenceManager extends EventEmitter {
       resolvedAdapter = { adapter: adapterInstance, restorePattern: adapter.restorePattern }
       if (adapterInstance !== this.defaultAdapter && !this.isShuttingDown) {
         adapterInstance.initialize().catch((err) => {
-          serverLogger.error(`Failed to initialize adapter for record pattern ${pattern}:`, err)
+          serverLogger.error("failed to initialize adapter for record pattern", { pattern, err })
         })
       }
     }
@@ -220,7 +220,7 @@ export class PersistenceManager extends EventEmitter {
       await options.adapter.storeMessages(messages)
       this.emit("flushed", { channel, count: messages.length })
     } catch (err) {
-      serverLogger.error(`Failed to flush messages for channel ${channel}:`, err)
+      serverLogger.error("failed to flush messages for channel", { channel, err })
       if (!this.isShuttingDown) {
         const currentMessages = this.messageBuffer.get(channel) || []
         this.messageBuffer.set(channel, [...messages, ...currentMessages])
@@ -295,7 +295,7 @@ export class PersistenceManager extends EventEmitter {
       }
     }
     const handleFlushError = (failedRecords, err) => {
-      serverLogger.error("Failed to flush records:", err)
+      serverLogger.error("failed to flush records", { err })
       if (!this.isShuttingDown) {
         for (const record of failedRecords) this.recordBuffer.set(record.recordId, record)
         if (!this.recordFlushTimer) {
@@ -337,7 +337,7 @@ export class PersistenceManager extends EventEmitter {
         return await this.defaultAdapter.getRecords(pattern)
       }
     } catch (err) {
-      serverLogger.error(`Failed to get persisted records for pattern ${pattern}:`, err)
+      serverLogger.error("failed to get persisted records for pattern", { pattern, err })
     }
     return []
   }
@@ -364,7 +364,7 @@ export class PersistenceManager extends EventEmitter {
     }
     for (const adapter of adapters) {
       try { await adapter.close() }
-      catch (err) { serverLogger.error("Error closing persistence adapter:", err) }
+      catch (err) { serverLogger.error("error closing persistence adapter", { err }) }
     }
     this.initialized = false
   }

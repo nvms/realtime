@@ -1,7 +1,7 @@
 import { createServer as createHttpServer } from "node:http"
 import { randomUUID } from "node:crypto"
 import { WebSocketServer } from "ws"
-import { LogLevel, Status, serverLogger, parseCommand } from "../shared/index.js"
+import { LogLevel, configureLogLevel, Status, serverLogger, parseCommand } from "../shared/index.js"
 import { Connection } from "./connection.js"
 import { PUB_SUB_CHANNEL_PREFIX } from "./utils/constants.js"
 import { ConnectionManager } from "./managers/connections.js"
@@ -54,7 +54,7 @@ export class RealtimeServer {
       enablePresenceExpirationEvents: opts.enablePresenceExpirationEvents ?? true,
     }
 
-    serverLogger.configure({ level: this.serverOptions.logLevel, styling: false })
+    configureLogLevel(this.serverOptions.logLevel)
 
     this.redisManager = new RedisManager()
     this.redisManager.initialize(opts.redis, (err) => this._emitError(err))
@@ -159,7 +159,7 @@ export class RealtimeServer {
 
   enableGracefulShutdown() {
     const handler = () => {
-      serverLogger.info("Received shutdown signal, closing...")
+      serverLogger.info("received shutdown signal, closing")
       this.close().then(() => process.exit(0))
     }
     process.on("SIGTERM", handler)
@@ -177,7 +177,7 @@ export class RealtimeServer {
   }
 
   _emitError(err) {
-    serverLogger.error(`Error: ${err}`)
+    serverLogger.error("error", { err })
     for (const handler of this._errorHandlers) handler(err)
   }
 
@@ -702,7 +702,7 @@ export class RealtimeServer {
         this.recordSubscriptionManager.addSubscription(recordId, connectionId, mode)
         return { success: true, record, version }
       } catch (e) {
-        serverLogger.error(`Failed to subscribe to record ${recordId}:`, e)
+        serverLogger.error("failed to subscribe to record", { recordId, err: e })
         return { success: false }
       }
     })
@@ -742,7 +742,7 @@ export class RealtimeServer {
         statesMap.forEach((state, connectionId) => { states[connectionId] = state })
         return { success: true, present, states }
       } catch (e) {
-        serverLogger.error(`Failed to subscribe to presence for room ${roomName}:`, e)
+        serverLogger.error("failed to subscribe to presence for room", { roomName, err: e })
         return { success: false, present: [] }
       }
     })
@@ -764,7 +764,7 @@ export class RealtimeServer {
         await this.presenceManager.publishPresenceState(connectionId, roomName, state, expireAfter, silent)
         return true
       } catch (e) {
-        serverLogger.error(`Failed to publish presence state for room ${roomName}:`, e)
+        serverLogger.error("failed to publish presence state for room", { roomName, err: e })
         return false
       }
     })
@@ -779,7 +779,7 @@ export class RealtimeServer {
         await this.presenceManager.clearPresenceState(connectionId, roomName)
         return true
       } catch (e) {
-        serverLogger.error(`Failed to clear presence state for room ${roomName}:`, e)
+        serverLogger.error("failed to clear presence state for room", { roomName, err: e })
         return false
       }
     })
@@ -796,7 +796,7 @@ export class RealtimeServer {
         statesMap.forEach((state, connectionId) => { states[connectionId] = state })
         return { success: true, present, states }
       } catch (e) {
-        serverLogger.error(`Failed to get presence state for room ${roomName}:`, e)
+        serverLogger.error("failed to get presence state for room", { roomName, err: e })
         return { success: false, present: [] }
       }
     })
@@ -812,7 +812,7 @@ export class RealtimeServer {
         const recordsWithId = records.map((record) => ({ id: record.id, record }))
         return { success: true, ids, records: recordsWithId, version }
       } catch (e) {
-        serverLogger.error(`Failed to subscribe to collection ${collectionId}:`, e)
+        serverLogger.error("failed to subscribe to collection", { collectionId, err: e })
         return { success: false, ids: [], records: [], version: 0 }
       }
     })
@@ -824,7 +824,7 @@ export class RealtimeServer {
   }
 
   async cleanupConnection(connection) {
-    serverLogger.info("Cleaning up connection:", connection.id)
+    serverLogger.info("cleaning up connection", { connectionId: connection.id })
     connection.stopIntervals()
     try {
       await this.presenceManager.cleanupConnection(connection)
@@ -858,7 +858,7 @@ export class RealtimeServer {
 
     if (this.persistenceManager) {
       try { await this.persistenceManager.shutdown() }
-      catch (err) { serverLogger.error("Error shutting down persistence manager:", err) }
+      catch (err) { serverLogger.error("error shutting down persistence manager", { err }) }
     }
 
     await this.channelManager.cleanupAllSubscriptions()
