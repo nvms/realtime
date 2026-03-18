@@ -9,7 +9,7 @@ export function createRoomSubscriptions(client, presence) {
    * @returns {Promise<{success: boolean, present: string[]}>}
    */
   async function join(roomName, onPresenceUpdate) {
-    const joinResult = await client.command("mesh/join-room", { roomName })
+    const joinResult = await client.command("rt/join-room", { roomName })
     if (!joinResult.success) return { success: false, present: [] }
 
     joinedRooms.set(roomName, onPresenceUpdate)
@@ -25,7 +25,7 @@ export function createRoomSubscriptions(client, presence) {
    * @returns {Promise<{success: boolean}>}
    */
   async function leave(roomName) {
-    const result = await client.command("mesh/leave-room", { roomName })
+    const result = await client.command("rt/leave-room", { roomName })
     if (result.success) {
       joinedRooms.delete(roomName)
       if (client.presenceSubscriptions.has(roomName)) {
@@ -41,7 +41,7 @@ export function createRoomSubscriptions(client, presence) {
    */
   async function getMetadata(roomName) {
     try {
-      const result = await client.command("mesh/get-room-metadata", { roomName })
+      const result = await client.command("rt/get-room-metadata", { roomName })
       return result.metadata
     } catch (error) {
       clientLogger.error(`Failed to get metadata for room ${roomName}:`, error)

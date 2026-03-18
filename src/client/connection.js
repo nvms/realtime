@@ -91,7 +91,7 @@ export class Connection extends EventEmitter {
 
         this.emit("message", data);
 
-        if (data.command === "mesh/assign-id") {
+        if (data.command === "rt/assign-id") {
           this.connectionId = data.payload;
           this.emit("id-assigned", data.payload);
         } else if (data.command === "latency:request") {

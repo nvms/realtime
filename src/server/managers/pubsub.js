@@ -23,8 +23,8 @@ export class PubSubManager {
   subscribeToInstanceChannel() {
     const channel = `${PUB_SUB_CHANNEL_PREFIX}${this.instanceId}`
     this._subscriptionPromise = new Promise((resolve, reject) => {
-      this.subClient.subscribe(channel, RECORD_PUB_SUB_CHANNEL, "mesh:collection:record-change")
-      this.subClient.psubscribe("mesh:presence:updates:*", (err) => {
+      this.subClient.subscribe(channel, RECORD_PUB_SUB_CHANNEL, "rt:collection:record-change")
+      this.subClient.psubscribe("rt:presence:updates:*", (err) => {
         if (err) {
           this.emitError(new Error(`Failed to subscribe to channels/patterns: ${JSON.stringify({ cause: err })}`))
           reject(err)
@@ -43,14 +43,14 @@ export class PubSubManager {
         this._handleInstancePubSubMessage(channel, message)
       } else if (channel === RECORD_PUB_SUB_CHANNEL) {
         this._handleRecordUpdatePubSubMessage(message)
-      } else if (channel === "mesh:collection:record-change") {
+      } else if (channel === "rt:collection:record-change") {
         this._handleCollectionRecordChange(message)
       } else {
         const subscribers = this.getChannelSubscriptions(channel)
         if (subscribers) {
           for (const connection of subscribers) {
             if (!connection.isDead) {
-              connection.send({ command: "mesh/subscription-message", payload: { channel, message } })
+              connection.send({ command: "rt/subscription-message", payload: { channel, message } })
             }
           }
         }
@@ -58,14 +58,14 @@ export class PubSubManager {
     })
 
     this.subClient.on("pmessage", async (pattern, channel, message) => {
-      if (pattern === "mesh:presence:updates:*") {
+      if (pattern === "rt:presence:updates:*") {
         const subscribers = this.getChannelSubscriptions(channel)
         if (subscribers) {
           try {
             const payload = JSON.parse(message)
             subscribers.forEach((connection) => {
               if (!connection.isDead) {
-                connection.send({ command: "mesh/presence-update", payload })
+                connection.send({ command: "rt/presence-update", payload })
               } else {
                 subscribers.delete(connection)
               }
@@ -105,11 +105,11 @@ export class PubSubManager {
         const connection = this.connectionManager.getLocalConnection(connectionId)
         if (connection && !connection.isDead) {
           if (deleted) {
-            connection.send({ command: "mesh/record-deleted", payload: { recordId, version } })
+            connection.send({ command: "rt/record-deleted", payload: { recordId, version } })
           } else if (mode === "patch" && patch) {
-            connection.send({ command: "mesh/record-update", payload: { recordId, patch, version } })
+            connection.send({ command: "rt/record-update", payload: { recordId, patch, version } })
           } else if (mode === "full" && newValue !== undefined) {
-            connection.send({ command: "mesh/record-update", payload: { recordId, full: newValue, version } })
+            connection.send({ command: "rt/record-update", payload: { recordId, full: newValue, version } })
           }
         } else if (!connection || connection.isDead) {
           subscribers.delete(connectionId)
@@ -168,7 +168,7 @@ export class PubSubManager {
 
         const newRecords = await this.collectionManager.resolveCollection(collectionId, connection)
         const newRecordIds = newRecords.map((record) => record.id)
-        const previousRecordIdsKey = `mesh:collection:${collectionId}:${connectionId}`
+        const previousRecordIdsKey = `rt:collection:${collectionId}:${connectionId}`
         const previousRecordIdsStr = await this.pubClient.get(previousRecordIdsKey)
         const previousRecordIds = previousRecordIdsStr ? JSON.parse(previousRecordIdsStr) : []
 
@@ -199,7 +199,7 @@ export class PubSubManager {
           this.collectionManager.updateSubscriptionVersion(collectionId, connectionId, newCollectionVersion)
           await this.pubClient.set(previousRecordIdsKey, JSON.stringify(newRecordIds))
           connection.send({
-            command: "mesh/collection-diff",
+            command: "rt/collection-diff",
             payload: { collectionId, added, removed, version: newCollectionVersion },
           })
         }
@@ -209,7 +209,7 @@ export class PubSubManager {
             try {
               const { record, version } = await this.recordManager.getRecordAndVersion(recordId)
               if (record) {
-                connection.send({ command: "mesh/record-update", payload: { recordId, version, full: record } })
+                connection.send({ command: "rt/record-update", payload: { recordId, version, full: record } })
               }
             } catch (recordError) {
               serverLogger.info(`Record ${recordId} not found during collection update (likely deleted).`)
@@ -234,8 +234,8 @@ export class PubSubManager {
     if (this.subClient && this.subClient.status !== "end") {
       const channel = `${PUB_SUB_CHANNEL_PREFIX}${this.instanceId}`
       await Promise.all([
-        new Promise((resolve) => { this.subClient.unsubscribe(channel, RECORD_PUB_SUB_CHANNEL, "mesh:collection:record-change", () => resolve()) }),
-        new Promise((resolve) => { this.subClient.punsubscribe("mesh:presence:updates:*", () => resolve()) }),
+        new Promise((resolve) => { this.subClient.unsubscribe(channel, RECORD_PUB_SUB_CHANNEL, "rt:collection:record-change", () => resolve()) }),
+        new Promise((resolve) => { this.subClient.punsubscribe("rt:presence:updates:*", () => resolve()) }),
       ])
     }
   }

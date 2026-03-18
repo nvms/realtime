@@ -360,7 +360,7 @@ describe("attach", () => {
     await server.close()
     server = null
 
-    // http server should still be listening after mesh.close()
+    // http server should still be listening after server.close()
     expect(httpServer.listening).toBe(true)
     httpServer.close()
   })

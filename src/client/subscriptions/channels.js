@@ -23,7 +23,7 @@ export function createChannelSubscriptions(client) {
    */
   async function subscribe(channel, callback, options) {
     subscriptions.set(channel, { callback, historyLimit: options?.historyLimit })
-    const result = await client.command("mesh/subscribe-channel", {
+    const result = await client.command("rt/subscribe-channel", {
       channel,
       historyLimit: options?.historyLimit,
       since: options?.since,
@@ -40,7 +40,7 @@ export function createChannelSubscriptions(client) {
    */
   function unsubscribe(channel) {
     subscriptions.delete(channel)
-    return client.command("mesh/unsubscribe-channel", { channel })
+    return client.command("rt/unsubscribe-channel", { channel })
   }
 
   /**
@@ -50,7 +50,7 @@ export function createChannelSubscriptions(client) {
    */
   async function getHistory(channel, options) {
     try {
-      const result = await client.command("mesh/get-channel-history", {
+      const result = await client.command("rt/get-channel-history", {
         channel,
         limit: options?.limit,
         since: options?.since,

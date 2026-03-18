@@ -42,7 +42,7 @@ export function createCollectionSubscriptions(client) {
    */
   async function subscribe(collectionId, options = {}) {
     try {
-      const result = await client.command("mesh/subscribe-collection", { collectionId })
+      const result = await client.command("rt/subscribe-collection", { collectionId })
       if (result.success) {
         subscriptions.set(collectionId, {
           ids: new Set(result.ids),
@@ -70,7 +70,7 @@ export function createCollectionSubscriptions(client) {
    */
   async function unsubscribe(collectionId) {
     try {
-      const success = await client.command("mesh/unsubscribe-collection", { collectionId })
+      const success = await client.command("rt/unsubscribe-collection", { collectionId })
       if (success) subscriptions.delete(collectionId)
       return success
     } catch (error) {

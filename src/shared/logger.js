@@ -13,7 +13,7 @@ export class Logger {
   constructor(config) {
     this.config = {
       level: config?.level ?? LogLevel.INFO,
-      prefix: config?.prefix ?? "[mesh]",
+      prefix: config?.prefix ?? "[realtime]",
       styling: config?.styling ?? isBrowser,
     }
   }

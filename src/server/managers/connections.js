@@ -1,8 +1,8 @@
 import { deepMerge, isObject } from "../../shared/index.js"
 
-const CONNECTIONS_HASH_KEY = "mesh:connections"
-const CONNECTIONS_META_HASH_KEY = "mesh:connection-meta"
-const INSTANCE_CONNECTIONS_KEY_PREFIX = "mesh:connections:"
+const CONNECTIONS_HASH_KEY = "rt:connections"
+const CONNECTIONS_META_HASH_KEY = "rt:connection-meta"
+const INSTANCE_CONNECTIONS_KEY_PREFIX = "rt:connections:"
 
 export class ConnectionManager {
   constructor({ redis, instanceId, roomManager }) {

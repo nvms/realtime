@@ -72,7 +72,7 @@ describe("presence", () => {
 
     await wait(100)
 
-    await clientB.command("mesh/publish-presence-state", {
+    await clientB.command("rt/publish-presence-state", {
       roomName: "collab",
       state: { cursor: { x: 100, y: 200 } },
     })

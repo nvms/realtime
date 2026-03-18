@@ -292,7 +292,7 @@ export class RealtimeServer {
           pendingAuthDataStore.delete(req)
           await this.connectionManager.setMetadata(connection, authData)
         }
-        connection.send({ command: "mesh/assign-id", payload: connection.id })
+        connection.send({ command: "rt/assign-id", payload: connection.id })
       } catch (error) {
         connection.close()
         return
@@ -490,7 +490,7 @@ export class RealtimeServer {
           if (connection) {
             metadata = await this.connectionManager.getMetadata(connection)
           } else {
-            const metadataString = await this.redisManager.redis.hget("mesh:connection-meta", connectionId)
+            const metadataString = await this.redisManager.redis.hget("rt:connection-meta", connectionId)
             metadata = metadataString ? JSON.parse(metadataString) : null
           }
           return { id: connectionId, metadata }
@@ -582,9 +582,9 @@ export class RealtimeServer {
   }
 
   _registerBuiltinCommands() {
-    this.exposeCommand("mesh/noop", async () => true)
+    this.exposeCommand("rt/noop", async () => true)
 
-    this.exposeCommand("mesh/subscribe-channel", async (ctx) => {
+    this.exposeCommand("rt/subscribe-channel", async (ctx) => {
       const { channel, historyLimit, since } = ctx.payload
       if (!(await this.channelManager.isChannelExposed(channel, ctx.connection))) {
         return { success: false, history: [] }
@@ -601,7 +601,7 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/unsubscribe-channel", async (ctx) => {
+    this.exposeCommand("rt/unsubscribe-channel", async (ctx) => {
       const { channel } = ctx.payload
       const wasSubscribed = this.channelManager.removeSubscription(channel, ctx.connection)
       if (wasSubscribed && !this.channelManager.getSubscribers(channel)) {
@@ -610,7 +610,7 @@ export class RealtimeServer {
       return wasSubscribed
     })
 
-    this.exposeCommand("mesh/get-channel-history", async (ctx) => {
+    this.exposeCommand("rt/get-channel-history", async (ctx) => {
       const { channel, limit, since } = ctx.payload
       if (!(await this.channelManager.isChannelExposed(channel, ctx.connection))) {
         return { success: false, history: [] }
@@ -630,44 +630,44 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/join-room", async (ctx) => {
+    this.exposeCommand("rt/join-room", async (ctx) => {
       const { roomName } = ctx.payload
       await this.addToRoom(roomName, ctx.connection)
       const present = await this.getRoomMembersWithMetadata(roomName)
       return { success: true, present }
     })
 
-    this.exposeCommand("mesh/leave-room", async (ctx) => {
+    this.exposeCommand("rt/leave-room", async (ctx) => {
       const { roomName } = ctx.payload
       await this.removeFromRoom(roomName, ctx.connection)
       return { success: true }
     })
 
-    this.exposeCommand("mesh/get-connection-metadata", async (ctx) => {
+    this.exposeCommand("rt/get-connection-metadata", async (ctx) => {
       const { connectionId } = ctx.payload
       const connection = this.connectionManager.getLocalConnection(connectionId)
       if (connection) {
         const metadata = await this.connectionManager.getMetadata(connection)
         return { metadata }
       } else {
-        const metadata = await this.redisManager.redis.hget("mesh:connection-meta", connectionId)
+        const metadata = await this.redisManager.redis.hget("rt:connection-meta", connectionId)
         return { metadata: metadata ? JSON.parse(metadata) : null }
       }
     })
 
-    this.exposeCommand("mesh/get-my-connection-metadata", async (ctx) => {
+    this.exposeCommand("rt/get-my-connection-metadata", async (ctx) => {
       const connectionId = ctx.connection.id
       const connection = this.connectionManager.getLocalConnection(connectionId)
       if (connection) {
         const metadata = await this.connectionManager.getMetadata(connection)
         return { metadata }
       } else {
-        const metadata = await this.redisManager.redis.hget("mesh:connection-meta", connectionId)
+        const metadata = await this.redisManager.redis.hget("rt:connection-meta", connectionId)
         return { metadata: metadata ? JSON.parse(metadata) : null }
       }
     })
 
-    this.exposeCommand("mesh/set-my-connection-metadata", async (ctx) => {
+    this.exposeCommand("rt/set-my-connection-metadata", async (ctx) => {
       const { metadata, options } = ctx.payload
       const connectionId = ctx.connection.id
       const connection = this.connectionManager.getLocalConnection(connectionId)
@@ -683,7 +683,7 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/get-room-metadata", async (ctx) => {
+    this.exposeCommand("rt/get-room-metadata", async (ctx) => {
       const { roomName } = ctx.payload
       const metadata = await this.roomManager.getMetadata(roomName)
       return { metadata }
@@ -691,7 +691,7 @@ export class RealtimeServer {
   }
 
   _registerRecordCommands() {
-    this.exposeCommand("mesh/subscribe-record", async (ctx) => {
+    this.exposeCommand("rt/subscribe-record", async (ctx) => {
       const { recordId, mode = "full" } = ctx.payload
       const connectionId = ctx.connection.id
       if (!(await this.recordSubscriptionManager.isRecordExposed(recordId, ctx.connection))) {
@@ -707,12 +707,12 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/unsubscribe-record", async (ctx) => {
+    this.exposeCommand("rt/unsubscribe-record", async (ctx) => {
       const { recordId } = ctx.payload
       return this.recordSubscriptionManager.removeSubscription(recordId, ctx.connection.id)
     })
 
-    this.exposeCommand("mesh/publish-record-update", async (ctx) => {
+    this.exposeCommand("rt/publish-record-update", async (ctx) => {
       const { recordId, newValue, options } = ctx.payload
       if (!(await this.recordSubscriptionManager.isRecordWritable(recordId, ctx.connection))) {
         throw new Error(`Record "${recordId}" is not writable by this connection.`)
@@ -725,13 +725,13 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/subscribe-presence", async (ctx) => {
+    this.exposeCommand("rt/subscribe-presence", async (ctx) => {
       const { roomName } = ctx.payload
       if (!(await this.presenceManager.isRoomTracked(roomName, ctx.connection))) {
         return { success: false, present: [] }
       }
       try {
-        const presenceChannel = `mesh:presence:updates:${roomName}`
+        const presenceChannel = `rt:presence:updates:${roomName}`
         this.channelManager.addSubscription(presenceChannel, ctx.connection)
         if (!this.channelManager.getSubscribers(presenceChannel) || this.channelManager.getSubscribers(presenceChannel)?.size === 1) {
           await this.channelManager.subscribeToRedisChannel(presenceChannel)
@@ -747,13 +747,13 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/unsubscribe-presence", async (ctx) => {
+    this.exposeCommand("rt/unsubscribe-presence", async (ctx) => {
       const { roomName } = ctx.payload
-      const presenceChannel = `mesh:presence:updates:${roomName}`
+      const presenceChannel = `rt:presence:updates:${roomName}`
       return this.channelManager.removeSubscription(presenceChannel, ctx.connection)
     })
 
-    this.exposeCommand("mesh/publish-presence-state", async (ctx) => {
+    this.exposeCommand("rt/publish-presence-state", async (ctx) => {
       const { roomName, state, expireAfter, silent } = ctx.payload
       const connectionId = ctx.connection.id
       if (!state) return false
@@ -769,7 +769,7 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/clear-presence-state", async (ctx) => {
+    this.exposeCommand("rt/clear-presence-state", async (ctx) => {
       const { roomName } = ctx.payload
       const connectionId = ctx.connection.id
       if (!(await this.presenceManager.isRoomTracked(roomName, ctx.connection)) || !(await this.isInRoom(roomName, connectionId))) {
@@ -784,7 +784,7 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/get-presence-state", async (ctx) => {
+    this.exposeCommand("rt/get-presence-state", async (ctx) => {
       const { roomName } = ctx.payload
       if (!(await this.presenceManager.isRoomTracked(roomName, ctx.connection))) {
         return { success: false, present: [] }
@@ -801,7 +801,7 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/subscribe-collection", async (ctx) => {
+    this.exposeCommand("rt/subscribe-collection", async (ctx) => {
       const { collectionId } = ctx.payload
       const connectionId = ctx.connection.id
       if (!(await this.collectionManager.isCollectionExposed(collectionId, ctx.connection))) {
@@ -817,7 +817,7 @@ export class RealtimeServer {
       }
     })
 
-    this.exposeCommand("mesh/unsubscribe-collection", async (ctx) => {
+    this.exposeCommand("rt/unsubscribe-collection", async (ctx) => {
       const { collectionId } = ctx.payload
       return this.collectionManager.removeSubscription(collectionId, ctx.connection.id)
     })

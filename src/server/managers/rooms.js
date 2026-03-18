@@ -5,9 +5,9 @@ export class RoomManager {
     this.redis = redis
   }
 
-  roomKey(roomName) { return `mesh:room:${roomName}` }
-  connectionsRoomKey(connectionId) { return `mesh:connection:${connectionId}:rooms` }
-  roomMetadataKey(roomName) { return `mesh:roommeta:${roomName}` }
+  roomKey(roomName) { return `rt:room:${roomName}` }
+  connectionsRoomKey(connectionId) { return `rt:connection:${connectionId}:rooms` }
+  roomMetadataKey(roomName) { return `rt:roommeta:${roomName}` }
 
   async getRoomConnectionIds(roomName) {
     return this.redis.smembers(this.roomKey(roomName))
@@ -30,8 +30,8 @@ export class RoomManager {
   }
 
   async getAllRooms() {
-    const keys = await this.redis.keys("mesh:room:*")
-    return keys.map((key) => key.replace("mesh:room:", ""))
+    const keys = await this.redis.keys("rt:room:*")
+    return keys.map((key) => key.replace("rt:room:", ""))
   }
 
   async removeFromRoom(roomName, connection) {
@@ -110,14 +110,14 @@ export class RoomManager {
   }
 
   async getAllMetadata() {
-    const keys = await this.redis.keys("mesh:roommeta:*")
+    const keys = await this.redis.keys("rt:roommeta:*")
     const result = []
     if (keys.length === 0) return result
     const pipeline = this.redis.pipeline()
     keys.forEach((key) => pipeline.hget(key, "data"))
     const results = await pipeline.exec()
     keys.forEach((key, index) => {
-      const roomName = key.replace("mesh:roommeta:", "")
+      const roomName = key.replace("rt:roommeta:", "")
       const data = results?.[index]?.[1]
       if (data) {
         try { result.push({ id: roomName, metadata: JSON.parse(data) }) }

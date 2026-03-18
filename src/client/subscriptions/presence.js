@@ -16,7 +16,7 @@ export function createPresenceSubscriptions(client) {
    */
   async function subscribe(roomName, callback) {
     try {
-      const result = await client.command("mesh/subscribe-presence", { roomName })
+      const result = await client.command("rt/subscribe-presence", { roomName })
       if (result.success) {
         subscriptions.set(roomName, callback)
         if (result.present && result.present.length > 0) await callback(result)
@@ -34,7 +34,7 @@ export function createPresenceSubscriptions(client) {
    */
   async function unsubscribe(roomName) {
     try {
-      const success = await client.command("mesh/unsubscribe-presence", { roomName })
+      const success = await client.command("rt/unsubscribe-presence", { roomName })
       if (success) subscriptions.delete(roomName)
       return success
     } catch (error) {
@@ -50,7 +50,7 @@ export function createPresenceSubscriptions(client) {
    */
   async function publishState(roomName, options) {
     try {
-      return await client.command("mesh/publish-presence-state", {
+      return await client.command("rt/publish-presence-state", {
         roomName,
         state: options.state,
         expireAfter: options.expireAfter,
@@ -68,7 +68,7 @@ export function createPresenceSubscriptions(client) {
    */
   async function clearState(roomName) {
     try {
-      return await client.command("mesh/clear-presence-state", { roomName })
+      return await client.command("rt/clear-presence-state", { roomName })
     } catch (error) {
       clientLogger.error(`Failed to clear presence state for room ${roomName}:`, error)
       return false
@@ -79,7 +79,7 @@ export function createPresenceSubscriptions(client) {
     try {
       const handler = subscriptions.get(roomName)
       if (!handler) return false
-      const result = await client.command("mesh/get-presence-state", { roomName }, 5000).catch((err) => {
+      const result = await client.command("rt/get-presence-state", { roomName }, 5000).catch((err) => {
         clientLogger.error(`Failed to get presence state for room ${roomName}:`, err)
         return { success: false }
       })

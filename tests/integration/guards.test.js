@@ -81,7 +81,7 @@ describe("record guards", () => {
     await clientA.connect()
 
     await clientA.subscribeRecord("doc:1", () => {})
-    const result = await clientA.command("mesh/publish-record-update", {
+    const result = await clientA.command("rt/publish-record-update", {
       recordId: "doc:1",
       newValue: { hacked: true },
     })
@@ -105,7 +105,7 @@ describe("record guards", () => {
     await clientA.connect()
 
     await clientA.subscribeRecord("doc:1", () => {})
-    const result = await clientA.command("mesh/publish-record-update", {
+    const result = await clientA.command("rt/publish-record-update", {
       recordId: "doc:1",
       newValue: { content: "legit" },
     })
@@ -135,7 +135,7 @@ describe("presence guards", () => {
     clientA = new RealtimeClient(`ws://localhost:${server.port}`)
     await clientA.connect()
 
-    const result = await clientA.command("mesh/subscribe-presence", { roomName: "vip-room" })
+    const result = await clientA.command("rt/subscribe-presence", { roomName: "vip-room" })
     expect(result.success).toBe(false)
   })
 })

@@ -44,7 +44,7 @@ describe("rooms", () => {
     await clientA.connect()
 
     await clientA.joinRoom("lobby")
-    await clientA.command("mesh/leave-room", { roomName: "lobby" })
+    await clientA.command("rt/leave-room", { roomName: "lobby" })
 
     const members = await server.getRoomMembers("lobby")
     expect(members).not.toContain(clientA.connectionId)

@@ -5,9 +5,9 @@ export function createPostgresAdapter(options = {}) {
   const opts = {
     host: "localhost",
     port: 5432,
-    database: "mesh_test",
-    user: "mesh",
-    password: "mesh_password",
+    database: "realtime_test",
+    user: "realtime",
+    password: "realtime_password",
     max: 10,
     ...options,
   }

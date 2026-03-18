@@ -222,12 +222,12 @@ describe("records", () => {
 
     // now manually bump version in redis to v5 without going through v3,v4
     const redis = server.recordManager.getRedis()
-    await redis.set("mesh:record:gap:1", JSON.stringify({ count: 99 }))
-    await redis.set("mesh:record-version:gap:1", "5")
+    await redis.set("rt:record:gap:1", JSON.stringify({ count: 99 }))
+    await redis.set("rt:record-version:gap:1", "5")
 
     // publish a fake update at v5 - client has v2, expects v3, gets v5
     await server.recordSubscriptionManager.pubClient.publish(
-      "mesh:record-updates",
+      "rt:record-updates",
       JSON.stringify({
         recordId: "gap:1",
         newValue: { count: 99 },
@@ -262,7 +262,7 @@ describe("records", () => {
     await clientA.connect()
 
     await clientA.subscribeRecord("profile:user1", () => {})
-    const writeResult = await clientA.command("mesh/publish-record-update", {
+    const writeResult = await clientA.command("rt/publish-record-update", {
       recordId: "profile:user1",
       newValue: { name: "Test" },
     })

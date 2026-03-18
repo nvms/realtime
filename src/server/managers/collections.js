@@ -38,7 +38,7 @@ export class CollectionManager {
     const ids = records.map((record) => record.id)
     const version = 1
     this.collectionSubscriptions.get(collectionId).set(connectionId, { version })
-    await this.redis.set(`mesh:collection:${collectionId}:${connectionId}`, JSON.stringify(ids))
+    await this.redis.set(`rt:collection:${collectionId}:${connectionId}`, JSON.stringify(ids))
     return { ids, records, version }
   }
 
@@ -47,7 +47,7 @@ export class CollectionManager {
     if (collectionSubs?.has(connectionId)) {
       collectionSubs.delete(connectionId)
       if (collectionSubs.size === 0) this.collectionSubscriptions.delete(collectionId)
-      await this.redis.del(`mesh:collection:${collectionId}:${connectionId}`)
+      await this.redis.del(`rt:collection:${collectionId}:${connectionId}`)
       return true
     }
     return false
@@ -55,7 +55,7 @@ export class CollectionManager {
 
   async publishRecordChange(recordId) {
     try {
-      await this.redis.publish("mesh:collection:record-change", recordId)
+      await this.redis.publish("rt:collection:record-change", recordId)
     } catch (error) {
       this.emitError(new Error(`Failed to publish record change for ${recordId}: ${error}`))
     }
@@ -69,7 +69,7 @@ export class CollectionManager {
       subscribers.delete(connectionId)
       if (subscribers.size === 0) this.collectionSubscriptions.delete(collectionId)
       cleanupPromises.push(
-        this.redis.del(`mesh:collection:${collectionId}:${connectionId}`).then(() => {}).catch((err) => {
+        this.redis.del(`rt:collection:${collectionId}:${connectionId}`).then(() => {}).catch((err) => {
           this.emitError(new Error(`Failed to clean up collection subscription for "${collectionId}": ${err}`))
         })
       )
@@ -79,7 +79,7 @@ export class CollectionManager {
 
   async listRecordsMatching(pattern, options) {
     try {
-      const recordKeyPrefix = "mesh:record:"
+      const recordKeyPrefix = "rt:record:"
       const keys = []
       let cursor = "0"
       do {

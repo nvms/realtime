@@ -169,10 +169,10 @@ export class RealtimeClient extends EventEmitter {
   async getConnectionMetadata(connectionId) {
     try {
       if (connectionId) {
-        const result = await this.command("mesh/get-connection-metadata", { connectionId })
+        const result = await this.command("rt/get-connection-metadata", { connectionId })
         return result.metadata
       }
-      const result = await this.command("mesh/get-my-connection-metadata")
+      const result = await this.command("rt/get-my-connection-metadata")
       return result.metadata
     } catch (error) {
       clientLogger.error(`Failed to get metadata for connection:`, error)
@@ -187,7 +187,7 @@ export class RealtimeClient extends EventEmitter {
    */
   async setConnectionMetadata(metadata, options) {
     try {
-      const result = await this.command("mesh/set-my-connection-metadata", { metadata, options })
+      const result = await this.command("rt/set-my-connection-metadata", { metadata, options })
       return result.success
     } catch (error) {
       clientLogger.error(`Failed to set metadata for connection:`, error)
@@ -199,11 +199,11 @@ export class RealtimeClient extends EventEmitter {
     this.connection.on("message", (data) => {
       this.emit("message", data)
 
-      if (data.command === "mesh/record-update") this._records.handleUpdate(data.payload)
-      else if (data.command === "mesh/record-deleted") this._records.handleDeleted(data.payload)
-      else if (data.command === "mesh/presence-update") this._presence.handleUpdate(data.payload)
-      else if (data.command === "mesh/subscription-message") this._channels.handleMessage(data.payload)
-      else if (data.command === "mesh/collection-diff") this._collections.handleDiff(data.payload)
+      if (data.command === "rt/record-update") this._records.handleUpdate(data.payload)
+      else if (data.command === "rt/record-deleted") this._records.handleDeleted(data.payload)
+      else if (data.command === "rt/presence-update") this._presence.handleUpdate(data.payload)
+      else if (data.command === "rt/subscription-message") this._channels.handleMessage(data.payload)
+      else if (data.command === "rt/collection-diff") this._collections.handleDiff(data.payload)
       else {
         const systemCommands = ["ping", "pong", "latency", "latency:request", "latency:response"]
         if (data.command && !systemCommands.includes(data.command)) {
@@ -238,7 +238,7 @@ export class RealtimeClient extends EventEmitter {
             this._lastActivityTime = Date.now()
             if (eventName === "visibilitychange" && doc.visibilityState === "visible") {
               if (this._status === Status.OFFLINE) return
-              this.command("mesh/noop", {}, 5000)
+              this.command("rt/noop", {}, 5000)
                 .then(() => { clientLogger.info("Tab visible, connection ok"); this.emit("republish") })
                 .catch(() => { clientLogger.info("Tab visible, forcing reconnect"); this._forceReconnect() })
             }
@@ -253,7 +253,7 @@ export class RealtimeClient extends EventEmitter {
     const now = Date.now()
     const timeSinceActivity = now - this._lastActivityTime
     if (timeSinceActivity > this.options.pingTimeout && this._status === Status.ONLINE) {
-      this.command("mesh/noop", {}, 5000).catch(() => {
+      this.command("rt/noop", {}, 5000).catch(() => {
         clientLogger.info(`No activity for ${timeSinceActivity}ms, forcing reconnect`)
         this._forceReconnect()
       })

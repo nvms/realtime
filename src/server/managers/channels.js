@@ -36,8 +36,8 @@ export class ChannelManager {
     const serialized = typeof message === "string" ? message : JSON.stringify(message)
     const parsedHistory = parseInt(history, 10)
     if (!isNaN(parsedHistory) && parsedHistory > 0) {
-      await this.pubClient.rpush(`mesh:history:${channel}`, serialized)
-      await this.pubClient.ltrim(`mesh:history:${channel}`, -parsedHistory, -1)
+      await this.pubClient.rpush(`rt:history:${channel}`, serialized)
+      await this.pubClient.ltrim(`rt:history:${channel}`, -parsedHistory, -1)
     }
     this.messageStream.publishMessage(channel, serialized, instanceId)
     await this.pubClient.publish(channel, serialized)
@@ -89,11 +89,11 @@ export class ChannelManager {
         const messages = await this.persistenceManager.getMessages(channel, since, limit)
         return messages.map((msg) => msg.message)
       } catch {
-        const historyKey = `mesh:history:${channel}`
+        const historyKey = `rt:history:${channel}`
         return this.redis.lrange(historyKey, 0, limit - 1)
       }
     }
-    const historyKey = `mesh:history:${channel}`
+    const historyKey = `rt:history:${channel}`
     return this.redis.lrange(historyKey, 0, limit - 1)
   }
 

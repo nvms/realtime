@@ -63,7 +63,7 @@ export function createRecordSubscriptions(client) {
   async function subscribe(recordId, callback, options) {
     const mode = options?.mode ?? "full"
     try {
-      const result = await client.command("mesh/subscribe-record", { recordId, mode })
+      const result = await client.command("rt/subscribe-record", { recordId, mode })
       if (result.success) {
         subscriptions.set(recordId, { callback, localVersion: result.version, mode })
         if (callback) await callback({ recordId, full: result.record, version: result.version })
@@ -81,7 +81,7 @@ export function createRecordSubscriptions(client) {
    */
   async function unsubscribe(recordId) {
     try {
-      const success = await client.command("mesh/unsubscribe-record", { recordId })
+      const success = await client.command("rt/unsubscribe-record", { recordId })
       if (success) subscriptions.delete(recordId)
       return success
     } catch (error) {
@@ -98,7 +98,7 @@ export function createRecordSubscriptions(client) {
    */
   async function write(recordId, newValue, options) {
     try {
-      const result = await client.command("mesh/publish-record-update", { recordId, newValue, options })
+      const result = await client.command("rt/publish-record-update", { recordId, newValue, options })
       return result.success === true
     } catch (error) {
       clientLogger.error(`Failed to publish update for record ${recordId}:`, error)

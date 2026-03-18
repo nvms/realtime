@@ -7,8 +7,8 @@ export class PresenceManager {
     this.redisManager = redisManager
     this.presenceExpirationEventsEnabled = enableExpirationEvents
 
-    this.PRESENCE_KEY_PATTERN = /^mesh:presence:room:(.+):conn:(.+)$/
-    this.PRESENCE_STATE_KEY_PATTERN = /^mesh:presence:state:(.+):conn:(.+)$/
+    this.PRESENCE_KEY_PATTERN = /^rt:presence:room:(.+):conn:(.+)$/
+    this.PRESENCE_STATE_KEY_PATTERN = /^rt:presence:state:(.+):conn:(.+)$/
     this.trackedRooms = []
     this.roomGuards = new Map()
     this.roomTTLs = new Map()
@@ -89,9 +89,9 @@ export class PresenceManager {
     return this.defaultTTL
   }
 
-  presenceRoomKey(roomName) { return `mesh:presence:room:${roomName}` }
-  presenceConnectionKey(roomName, connectionId) { return `mesh:presence:room:${roomName}:conn:${connectionId}` }
-  presenceStateKey(roomName, connectionId) { return `mesh:presence:state:${roomName}:conn:${connectionId}` }
+  presenceRoomKey(roomName) { return `rt:presence:room:${roomName}` }
+  presenceConnectionKey(roomName, connectionId) { return `rt:presence:room:${roomName}:conn:${connectionId}` }
+  presenceStateKey(roomName, connectionId) { return `rt:presence:state:${roomName}:conn:${connectionId}` }
 
   async markOnline(connectionId, roomName) {
     const roomKey = this.presenceRoomKey(roomName)
@@ -137,7 +137,7 @@ export class PresenceManager {
   }
 
   async _publishPresenceUpdate(roomName, connectionId, type) {
-    const channel = `mesh:presence:updates:${roomName}`
+    const channel = `rt:presence:updates:${roomName}`
     const message = JSON.stringify({ type, connectionId, roomName, timestamp: Date.now() })
     await this.redis.publish(channel, message)
   }
@@ -192,7 +192,7 @@ export class PresenceManager {
   }
 
   async _publishPresenceStateUpdate(roomName, connectionId, state) {
-    const channel = `mesh:presence:updates:${roomName}`
+    const channel = `rt:presence:updates:${roomName}`
     const message = JSON.stringify({ type: "state", connectionId, roomName, state, timestamp: Date.now() })
     await this.redis.publish(channel, message)
   }
