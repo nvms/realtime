@@ -1,6 +1,6 @@
 # @prsm/realtime
 
-distributed websocket framework built on redis. commands, channels, records, presence, collections, rooms, persistence.
+distributed websocket framework built on redis. commands, channels, records, presence, collections, rooms, persistence. devtools moved to separate package (prsm-devtools).
 
 ## structure
 
@@ -11,7 +11,6 @@ src/
   server/         - RealtimeServer, managers, connection, context
   client/         - RealtimeClient, connection, reconnection, subscription modules
   adapters/       - persistence adapters (sqlite, postgres) via subpath exports
-  devtools/       - state inspector (express router + vue client)
 tests/            - vitest integration tests (requires redis running)
 ```
 
@@ -22,7 +21,6 @@ import { RealtimeServer } from "@prsm/realtime"
 import { RealtimeClient } from "@prsm/realtime/client"
 import { createSqliteAdapter } from "@prsm/realtime/sqlite"
 import { createPostgresAdapter } from "@prsm/realtime/postgres"
-import { createDevtools } from "@prsm/realtime/devtools"
 ```
 
 ## dev
