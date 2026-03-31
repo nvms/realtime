@@ -4,6 +4,4 @@
 
 <h1 align="center">@prsm/realtime</h1>
 
-A distributed WebSocket framework for real-time applications.
-
-Realtime coordinates connections, rooms, presence, and shared state across distributed instances using Redis - with built-in support for structured commands, presence tracking, versioned data sync, pub/sub channels, collections, persistence, and automatic reconnection.
+Distributed WebSocket framework backed by Redis. Handles connections, rooms, presence, pub/sub channels, versioned record sync, collections, structured commands, persistence, and automatic reconnection across multiple server instances.
